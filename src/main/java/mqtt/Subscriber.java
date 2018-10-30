@@ -1,6 +1,5 @@
 package mqtt;
 
-import java.io.IOException;
 
 import javax.persistence.PersistenceException;
 import javax.persistence.TransactionRequiredException;
@@ -9,34 +8,18 @@ import org.eclipse.paho.client.mqttv3.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import entity.Measure;
-import mapping.Mapper;
-import mapping.MapperFactory;
 import mapping.MapperFactoryException;
 
 public class Subscriber implements MqttCallback {
 	
-	private JsonNode configuration;
-	
 	// JSON parser to unserialize objects
-	private Parser<Measure> parser;
-	
-	// JPA mapper
-	private Mapper<Measure> mapper;
+	private Handler handler;
 	
 	private IMqttClient client;
 	
 
 	public Subscriber(JsonNode configuration) {
-		this.configuration = configuration;
-		this.parser = null;
-		this.mapper = null;
-	}
-	
-	protected void initialize() throws MapperFactoryException {
-		MapperFactory<Measure> mapperFactory = new MapperFactory<>();
-		this.mapper = mapperFactory.createMapper(configuration.get("name").asText());
-		this.parser = new Parser<>(Measure.class);
+		this.handler = new Handler(configuration);
 	}
 	
 	public void connect(MqttConnectOptions options, String uri, String topic, String uuid, int qos) throws MqttException, MapperFactoryException {
@@ -44,6 +27,9 @@ public class Subscriber implements MqttCallback {
 		this.client.setCallback(this);
 		this.client.connect(options);	    
         this.client.subscribe(topic, qos);
+        this.handler.initialize();
+        Thread thread = new Thread(this.handler);
+        thread.start();
 	}
 	
     public void connectionLost(Throwable cause) {
@@ -53,8 +39,7 @@ public class Subscriber implements MqttCallback {
 
     public void messageArrived(String topic, MqttMessage message) throws MqttException {
 	    try {
-	    	// TODO : Parse message and record data in DB
-	    	System.out.println("Data saved: " + message.toString());
+	    	this.handler.handleMeasure(message.toString());
 	    }catch (IllegalArgumentException | TransactionRequiredException e) {
 			System.out.println("Ignoring last sensor data: " + message.toString());
 		}catch (PersistenceException e) {
