@@ -1,4 +1,6 @@
 package application;
+
+import java.nio.file.Paths;
 import java.util.UUID;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -15,7 +17,7 @@ import mqtt.Subscriber;
 public class Main {
 	
 	public static void initConfiguration(Configuration configuration) throws ConfigurationException {
-		System.out.println("Creating configuration file on path: " + configuration.getPath());
+		System.out.println("Creating configuration file on path: " + Paths.get(configuration.getPath()).toAbsolutePath().toString());
 		ObjectNode parameters = new ObjectNode(JsonNodeFactory.instance);
 		parameters.putObject(("database"))
 		.put("autostart", true)
@@ -26,7 +28,7 @@ public class Main {
 		.put("qos", 1)
 		.put("autoReconnect", true)
 		.put("cleanSession", false)
-		.put("topic", "")
+		.put("topic", "/")
 		.put("uuid", "")
 		.put("connexionTimeout", "60");
 		configuration.save(parameters);
@@ -37,7 +39,7 @@ public class Main {
 	public static void main(String[] args) throws Exception {
 
         Configuration configuration = new Configuration("config/config.json");
-		
+        
         JsonNode config = configuration.read();
         
         if(config == null) {

@@ -7,6 +7,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import entity.IEntity;
 import entity.Measure;
 import entity.Sensor;
 import mapping.Mapper;

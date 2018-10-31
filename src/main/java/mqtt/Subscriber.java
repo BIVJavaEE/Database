@@ -39,6 +39,7 @@ public class Subscriber implements MqttCallback {
 
     public void messageArrived(String topic, MqttMessage message) throws MqttException {
 	    try {
+	    	System.out.println("Data received: " + message.toString());
 	    	this.handler.handleMeasure(message.toString());
 	    }catch (IllegalArgumentException | TransactionRequiredException e) {
 			System.out.println("Ignoring last sensor data: " + message.toString());
